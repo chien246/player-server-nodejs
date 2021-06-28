@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daophim player</title>
+    <base href="/">
+    <link href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+
+    <%- include('css.ejs');%>
+
+</head>
+<!-- <%var url=process.env.PROXY_URL; %>-->
+<%var urls=process.env.GET_STREAM_LINK; %>
+    <% var url_fiml=urls + id; %>
+
+        <body>
+            <div id="container_video">
+                <video id="video" preload="auto" src='<%= url_fiml %>' autoplay>
+
+                    Sorry, your browser doesn't support embedded videos.
+                </video>
+                <div id="logo">
+                    <h1>DAO PHIM</h1>
+                </div>
+                <div id="replay">
+                    <button>
+                        <i class="far fa-undo-alt"></i>
+                    </button>
+                </div>
+                <div class="lds-ellipsis">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="controls">
+                    <div class="progress_bar">
+                        <div id="progress_movie">
+                            <div id="spooling"></div>
+                            <div id="time_seeking">
+                                <div>
+                                    <p>00:00</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="progress_bar_seeking"></div>
+
+                    </div>
+                    <div class="nav_movie">
+                        <div class="left_nav_movie">
+                            <div class="nav_element">
+                                <button id="play_pause">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            <div class="nav_element">
+                                <button id="vol">
+                                    <i class="fas fa-volume"></i>
+                                    <div id="range">
+                                        <div id="fill_range"></div>
+                                    </div>
+                                    <div id="vol_input">
+                                        <div>
+                                            <input type="range" min="0" max="100" value="100" id="range_vol">
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+                            <div class="nav_element">
+                                <p id="current_time">
+                                    <span id="now">00:00</span> / <span id="duration">00:00</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="right_nav_movie">
+                            <div class="nav_element">
+                                <button id="back_10s">
+                                    <img src="/assets/replay-10.png" alt="replay 10s icon" />
+                                </button>
+                            </div>
+                            <div class="nav_element">
+                                <button id="forward_10s">
+                                    <img src="/assets/forward-10.png" alt="forward 10s icon" />
+                                </button>
+                            </div>
+                            <div class="nav_element">
+                                <button id="setting">
+                                    <img src="/assets/settings.png" alt="settings icon" />
+                                </button>
+                                <div id="setting_video">
+                                    <div id="clode_setting">
+                                        <button>
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <!-- Nav -->
+                                    <div class="nav_setting">
+                                        <button class="set_tab active" data-tab-targer="sp_tab">
+                                            <i class="fas fa-clock"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Tabs -->
+                                    <div id="sp_tab" class="tabs_setting">
+                                        <ul>
+                                            <li data-sp="0.5">0.5x</li>
+                                            <li class="active_sp" data-sp="1">1x</li>
+                                            <li data-sp="1.25">1.25x</li>
+                                            <li data-sp="1.5">1.5x</li>
+                                            <li data-sp="2">2x</li>
+                                        </ul>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="nav_element">
+                                <button id="scale">
+                                    <i class="far fa-expand-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- <button id="skip_ad">
+                Bỏ qua quảng cáo
+            </button> -->
+                <!-- <div id="denied_hit_skip"></div> -->
+            </div>
+        </body>
+        <!-- 
+        <% var id_film=id; %>
+            <%var url=process.env.GET_STREAM_LINK; %> -->
+        <script>
+            $(document).ready(async () => {
+
+                //const TIME_FOR_AD = 1;
+                const video = $(('#container_video > video'));
+                const progress_bar = $('.progress_bar');
+                const progress = $('#progress_movie');
+                const seeking_bar = $('#progress_bar_seeking');
+                const time_seeking = $('#time_seeking');
+                // const skip_ad_bt = $('#skip_ad');
+                const play_bt = $('#play_pause');
+                const vol_bt = $('#vol');
+                const crTime = $('#current_time');
+                const back10_bt = $('#back_10s');
+                const forward10_bt = $('#forward_10s');
+                const setting_bt = $('#setting');
+                const scale_bt = $('#scale');
+                const vol_control = $('#range_vol');
+                const range_vol = $('#fill_range');
+                const duration_video = $('#duration');
+                const now = $('#now');
+                const set_speed = $('#sp_tab');
+                const replay_bt = $('#replay button');
+
+                // async function getLinkstream(id_film) {
+                //     var linkToEncode = '<%= process.env.ENCODE_LINK %>';
+
+                //     $.ajax({
+                //         method: 'GET',
+                //         url: linkToEncode + id_film
+                //     })
+                //         .then((d) => {
+                //             video.attr('src', "<%- url %>" + 'VTJGc2RHVmtYMTliZmZJdzJ0NFVtZlNmaUdIQXY0T3hWK1hEU0d3OFJJZHpRbHc3NVhrVlc4Rm1YNnd0ZEl1dDdMZmJ2SE40YWlzZ0dSbHFTUEVQd3c9PQ');
+                //             video[0].load();
+                //         })
+                //         .then(() => $('.lds-ellipsis').hide())
+                //         .catch((e) => {
+                //             console.log('error: ' + e);
+                //         })
+                // }
+
+                //getLinkstream('<%= id_film %>');
+
+                // video.on('loadeddata', () => {
+                //     console.log(video[0].readyState);
+                // })
+
+
+
+                let current_vol = video.prop('volume');
+
+                // let skip_ad = setInterval(timer, 1000);
+                let time = 0;
+
+                let st_bt = document.querySelectorAll('[data-tab-targer]');
+                let tabs = document.getElementsByClassName('tabs_setting');
+                st_bt.forEach(bt => {
+                    let id_tab_active = bt.getAttribute('data-tab-targer');
+                    bt.addEventListener('click', () => {
+                        for (var j = 0; j < tabs.length; j++) {
+                            tabs[j].style.display = 'none';
+                        }
+
+                        for (var j = 0; j < st_bt.length; j++) {
+                            st_bt[j].classList.remove('active');
+                        }
+
+                        bt.classList.add('active');
+                        document.getElementById(id_tab_active).style.display = "block";
+                    })
+                })
+
+                // function timer() {
+                //     time++
+                //     if (time == TIME_FOR_AD) {
+                //         clearInterval(skip_ad);
+                //         $('#denied_hit_skip').hide()
+                //     }
+                //     skip_ad_bt.text('Bỏ qua quảng cáo ' + time);
+                // }
+
+                replay_bt.on('click', () => {
+                    video.prop('currentTime', 0);
+                    $('#replay').hide();
+                    video[0].play();
+                })
+
+                let event_hide_control = setTimeout(() => {
+                    $('.controls').css('bottom', '-50px');
+                    clearTimeout(event_hide_control);
+                }, 3000)
+
+                var timeoutMouseStop;
+
+                $('#container_video').on('mousemove', () => {
+                    $('.controls').css('bottom', '5px');
+                    $('.controls').css('visibility', 'visible');
+                    $('#container_video').css('cursor', 'default');
+
+                    clearTimeout(timeoutMouseStop);
+                    timeoutMouseStop = setTimeout(() => {
+                        $('.controls').css('bottom', '-50px');
+                        $('.controls').css('visibility', 'hidden');
+                        $('#container_video').css('cursor', 'none');
+                        let isDisplaying = $('#setting_video').css('display');
+                        if (isDisplaying === 'block') {
+                            $('#setting_video').hide();
+                        }
+                    }, 3000)
+                })
+
+                $('#container_video').on('mouseleave', () => {
+                    if (video[0].paused != true) {
+                        let event_hide_control_leave = setTimeout(() => {
+                            $('.controls').css('bottom', '-50px');
+                            $('.controls').css('visibility', 'hidden');
+                            let isDisplaying = $('#setting_video').css('display');
+                            if (isDisplaying === 'block') {
+                                $('#setting_video').hide();
+                            }
+                            clearTimeout(event_hide_control_leave);
+                        }, 3000)
+                    }
+                })
+
+                video.on('loadeddata', () => {
+                    $('.lds-ellipsis').hide();
+                })
+
+                function formatTime(time) {
+                    let now;
+                    if (time >= 3600) {
+                        let hour = String(Math.floor(time / 3600));
+                        let minus = '0' + String(Math.floor((time - hour * 3600) / 60));
+                        let sec = '0' + String(Math.floor(time - minus * 60 - hour * 3600));
+                        now = hour + ':' + minus.slice(-2) + ':' + sec.slice(-2);
+                    } else {
+                        let minus = String(Math.floor(time / 60));
+                        let sec = '0' + String(Math.floor(time - minus * 60));
+                        now = minus + ':' + sec.slice(-2);
+                    }
+                    return now;
+                }
+
+                video.on('play', () => {
+                    play_bt.find('i').addClass('fa-pause').removeClass('fa-play');
+
+                    let duration = video[0].duration;
+                    let start_vol = video.prop('volume');
+                    video.prop('volume', start_vol);
+                    range_vol.width(start_vol * 130);
+                    duration_video.text(formatTime(duration));
+                })
+                const upTime = () => {
+                    if ($('.lds-ellipsis').css('display') === 'block') {
+                        $('.lds-ellipsis').hide();
+                    }
+                    let time_now = video.prop('currentTime');
+                    now.text(formatTime(time_now));
+                    let p = (video.prop('currentTime') / video[0].duration);
+                    progress.width(String(p * 100) + '%');
+                    if (time_now == video[0].duration) $('#replay').show();
+                }
+
+                video.on('timeupdate', upTime);
+
+                video.on('pause', () => {
+                    play_bt.find('i').addClass('fa-play').removeClass('fa-pause');
+                })
+
+                video.on('click', () => {
+                    if (video[0].paused) {
+                        video[0].play();
+                        if (video[0].readyState != 4) $('.lds-ellipsis').show();
+                    } else {
+                        video[0].pause();
+                    }
+                })
+
+                // skip_ad_bt.on('click', () => {
+                //     video.attr('src', "<%- url_fiml %>");
+                //     video[0].load();
+                //     skip_ad_bt.hide();
+                // })
+                play_bt.click(() => {
+                    if (video[0].duration) {
+                        if (video[0].readyState != 4) $('.lds-ellipsis').show();
+                        if (video[0].paused) {
+                            video[0].play();
+                            play_bt.find('i').addClass('fa-pause').removeClass('fa-play');
+                        } else {
+                            video[0].pause();
+                            play_bt.find('i').addClass('fa-play').removeClass('fa-pause');
+                        }
+                    }
+                })
+                vol_bt.find('i').on('click', () => {
+                    let vol = video.prop('volume');
+                    if (vol > 0) {
+                        video.prop('volume', 0);
+                        range_vol.width(0);
+                        vol_control.val(0);
+                        vol_bt.find('i').addClass('fa-volume-mute').removeClass('fa-volume');
+                    } else {
+                        video.prop('volume', current_vol);
+                        range_vol.width(current_vol / 1 * 130);
+                        vol_control.val(current_vol / 1 * 100);
+                        vol_bt.find('i').addClass('fa-volume').removeClass('fa-volume-mute');
+                    }
+
+                })
+                vol_control.on('input', () => {
+                    let val = vol_control.val();
+                    if (val == 0) {
+                        vol_bt.find('i').addClass('fa-volume-mute').removeClass('fa-volume');
+                    } else {
+                        vol_bt.find('i').addClass('fa-volume').removeClass('fa-volume-mute');
+                        let p = val / 100;
+                        range_vol.width(p * 130);
+
+                        video.prop('volume', p * 1);
+                        current_vol = p * 1;
+                    }
+                })
+                back10_bt.on('click', () => {
+                    let currentTime = video.prop('currentTime');
+                    if (currentTime < 10) {
+                        video.prop('currentTime', 0);
+                    } else {
+                        video.prop('currentTime', currentTime - 10);
+                    }
+                })
+                forward10_bt.on('click', () => {
+                    let currentTime = video.prop('currentTime');
+                    video.prop('currentTime', currentTime + 10);
+
+                })
+
+                $(document).keydown((e) => {
+                    let currentTime = video.prop('currentTime');
+                    if (e.which == 37) {
+                        if (currentTime < 10) {
+                            video.prop('currentTime', 0);
+                        } else {
+                            video.prop('currentTime', currentTime - 10);
+                        }
+                    }
+
+                    if (e.which == 39) {
+                        video.prop('currentTime', currentTime + 10);
+                    }
+
+                    if (e.which == 32) {
+                        if (video[0].paused) {
+                            video[0].play();
+                            play_bt.find('i').addClass('fa-pause').removeClass('fa-play');
+                        } else {
+                            video[0].pause();
+                            play_bt.find('i').addClass('fa-play').removeClass('fa-pause');
+                        }
+                    }
+                })
+
+                function getFullscreenElement() {
+                    return document.fullscreenElement
+                        || document.webkitFullscrennElement
+                        || document.mozFullscreenElment
+                        || document.msFullscreenElment;
+                }
+
+                scale_bt.on('click', () => {
+                    if (getFullscreenElement()) {
+                        document.exitFullscreen();
+                        scale_bt.find('i').addClass('fa-expand-alt').removeClass('fa-compress-alt');
+                    } else {
+                        document.getElementById('container_video').requestFullscreen().catch(console.log);
+                        scale_bt.find('i').addClass('fa-compress-alt').removeClass('fa-expand-alt');
+                    }
+                })
+
+                set_speed.find('ul li').click(function (e) {
+                    let lis = document.querySelectorAll('#sp_tab >ul li');
+                    lis.forEach(li => {
+                        li.classList.remove('active_sp');
+                    });
+                    $(this).addClass('active_sp');
+                    let s = parseFloat($(this).attr('data-sp'));
+                    document.querySelector('video').playbackRate = s;
+                });
+
+                setting_bt.on('click', () => {
+                    let isDisplaying = $('#setting_video').css('display');
+                    if (isDisplaying === 'block') {
+                        $('#setting_video').hide();
+                    } else {
+                        $('#setting_video').show();
+                    }
+                })
+
+                $('#clode_setting >button').on('click', () => {
+                    $('#setting_video').hide();
+                })
+
+
+                var pos;
+                var p;
+                var timeP;
+                var seekingVideo = function seeking(e) {
+                    if (video[0].duration) {
+                        pos = e.pageX - e.target.getBoundingClientRect().left;
+                        p = pos / e.target.getBoundingClientRect().width;
+                        video.off('timeupdate', upTime);
+                        progress.width(String(p * 100) + '%');
+                        timeP = p * video[0].duration;
+                        time_seeking.show();
+                        time_seeking.find('p').text(formatTime(timeP));
+                    }
+                }
+
+                var seeking_mouseup = function seekingUp() {
+                    seekingVideo = null;
+                    if (video[0].duration && video.prop('currentTime')) {
+                        timeP = p * video[0].duration;
+                        video.prop('currentTime', timeP);
+                        video.on('timeupdate', upTime);
+                        if (video[0].readyState != 4) $('.lds-ellipsis').show();
+                        time_seeking.hide();
+                    }
+                }
+
+                seeking_bar.on('mousedown', (e) => {
+                    seekingVideo = function seeking(e) {
+                        if (video[0].duration) {
+                            pos = e.pageX - e.target.getBoundingClientRect().left;
+                            p = pos / e.target.getBoundingClientRect().width;
+                            video.off('timeupdate', upTime);
+                            progress.width(String(p * 100) + '%');
+                            timeP = p * video[0].duration;
+                            time_seeking.show();
+                            time_seeking.find('p').text(formatTime(timeP));
+                        }
+                    }
+
+                    seeking_mouseup = function seekingUp() {
+                        seekingVideo = null;
+                        if (video[0].duration) {
+                            timeP = p * video[0].duration;
+                            video.prop('currentTime', timeP);
+                            video.on('timeupdate', upTime);
+                            if (video[0].readyState != 4) $('.lds-ellipsis').show();
+                            time_seeking.hide();
+                        }
+                    }
+                    seeking_bar.on('mousemove', (e) => {
+                        if (seekingVideo) seekingVideo(e);
+                    })
+
+                    seeking_bar.on('mouseleave', () => {
+                        if (seeking_mouseup) seeking_mouseup();
+                    })
+                })
+
+                seeking_bar.on('mouseup', () => {
+                    seekingVideo = null;
+                    if (video[0].duration && video.prop('currentTime')) {
+                        timeP = p * video[0].duration;
+                        video.prop('currentTime', timeP);
+                        video.on('timeupdate', upTime);
+                        if (video[0].readyState != 4) $('.lds-ellipsis').show();
+                        time_seeking.hide();
+                    }
+                    seeking_mouseup = null;
+                })
+
+            })
+        </script>
+
+        </html>
